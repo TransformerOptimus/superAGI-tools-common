@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+superagi/__init__.py
+superagi/tools/__init__.py
+superagi/tools/base_tool.py
+superagi_tools.egg-info/PKG-INFO
+superagi_tools.egg-info/SOURCES.txt
+superagi_tools.egg-info/dependency_links.txt
+superagi_tools.egg-info/requires.txt
+superagi_tools.egg-info/top_level.txt
