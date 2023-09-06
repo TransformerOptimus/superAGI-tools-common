@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='superagi_tools',
-    version='1.0.6',
+    version='1.0.7',
     description='A useful module for using tools from Superagi',
     author='superagi',
     author_email='mukunda@superagi.com',

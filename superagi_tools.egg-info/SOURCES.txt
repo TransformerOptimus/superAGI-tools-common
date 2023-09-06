@@ -4,6 +4,8 @@ setup.py
 superagi/__init__.py
 superagi/tools/__init__.py
 superagi/tools/base_tool.py
+superagi/types/__init__.py
+superagi/types/key_type.py
 superagi_tools.egg-info/PKG-INFO
 superagi_tools.egg-info/SOURCES.txt
 superagi_tools.egg-info/dependency_links.txt
