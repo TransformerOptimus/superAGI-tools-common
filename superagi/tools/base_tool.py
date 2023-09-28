@@ -13,10 +13,10 @@ from superagi.types.key_type import ToolConfigKeyType
 import os
 from sqlalchemy.orm import Session
 import csv
-
 from superagi.helper.s3_helper import S3Helper
 from superagi.lib.logger import logger
 from superagi.config.config import get_config
+from superagi.types.storage_types import StorageType
 
 
 class SchemaSettings:
@@ -265,19 +265,29 @@ class ToolConfiguration:
             self.key_type = key_type
         else:
             raise ValueError("key_type should be string/file/integer")
- 
-class StorageType(Enum):
-    FILE = 'FILE'
-    S3 = 'S3'
+    
+def get_resource_path( file_name: str):
+        """Get final path of the resource.
 
-    @classmethod
-    def get_storage_type(cls, store):
-        if store is None:
-            raise ValueError("Storage type cannot be None.")
-        store = store.upper()
-        if store in cls.__members__:
-            return cls[store]
-        raise ValueError(f"{store} is not a valid storage name.")
+        Args:
+            file_name (str): The name of the file.
+        """
+        root_output_dir = get_root_output_dir() + file_name
+        return root_output_dir
+
+   
+def get_root_output_dir():
+        """Get root dir of the resource.
+        """
+        root_dir = get_config('RESOURCES_OUTPUT_ROOT_DIR')
+
+        if root_dir is not None:
+            root_dir = root_dir if root_dir.startswith("/") else os.getcwd() + "/" + root_dir
+            root_dir = root_dir if root_dir.endswith("/") else root_dir + "/"
+        else:
+            root_dir = os.getcwd() + "/"
+        return root_dir
+
     
 class FileManager:
     def __init__(self, session: Session, agent_id: int = None, agent_execution_id: int = None):
@@ -287,38 +297,38 @@ class FileManager:
         
     def write_binary_file(self, file_name: str, data):
         if self.agent_id is not None:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
         else:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
         try:
             with open(final_path, mode="wb") as img:
                 img.write(data)
                 img.close()
-            self.write_to_s3(file_name, final_path)
+            with open(final_path, 'rb') as img:
+                storage_type = StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value))
+                if  storage_type == StorageType.S3.value:
+                    S3Helper().upload_file(img, path=final_path)
             logger.info(f"Binary {file_name} saved successfully")
             return f"Binary {file_name} saved successfully"
         except Exception as err:
             return f"Error write_binary_file: {err}"
-        
-    def write_to_s3(self, file_name, final_path):
-        with open(f"/assets/output/{file_name}", 'rb') as img:
-            
-            storage_type = StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value))
-
-            if  storage_type == StorageType.S3.value:
-                s3_helper = S3Helper()
-                s3_helper.upload_file(img, path=f"/assets/output/{file_name}")
 
     def write_file(self, file_name: str, content):
         if self.agent_id is not None:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
+            
         else:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
+
         try:
             with open(final_path, mode="w") as file:
                 file.write(content)
                 file.close()
-            self.write_to_s3(file_name, final_path)
+                
+            with open(final_path, 'rb') as img:
+                storage_type = StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value))
+                if  storage_type == StorageType.S3.value:
+                    S3Helper().upload_file(img, path=final_path)
             logger.info(f"{file_name} - File written successfully")
             return f"{file_name} - File written successfully"
         except Exception as err:
@@ -326,14 +336,17 @@ class FileManager:
         
     def write_csv_file(self, file_name: str, csv_data):
         if self.agent_id is not None:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
         else:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
         try:
             with open(final_path, mode="w", newline="") as file:
                 writer = csv.writer(file, lineterminator="\n")
                 writer.writerows(csv_data)
-            self.write_to_s3(file_name, final_path)
+            with open(final_path, 'rb') as img:
+                storage_type = StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value))
+                if  storage_type == StorageType.S3.value:
+                    S3Helper().upload_file(img, path=final_path)
             logger.info(f"{file_name} - File written successfully")
             return f"{file_name} - File written successfully"
         except Exception as err:
@@ -342,9 +355,9 @@ class FileManager:
         
     def read_file(self, file_name: str):
         if self.agent_id is not None:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
         else:
-            final_path = f"/assets/output/{file_name}"
+            final_path = get_resource_path(file_name)
 
         try:
             with open(final_path, mode="r") as file:
@@ -372,3 +385,4 @@ class FileManager:
             logger.error(f"Error while accessing files in {final_path}: {err}")
             files = []
         return files
+     
