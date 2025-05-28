@@ -94,3 +94,4 @@ Join SuperAGI Discord for any queries: [https://discord.gg/dXbRe5BHJC](https://d
 ## 👩‍💻Discussion and Development
 Most development discussions take place on GitHub in the [SuperAGI Repository](https://github.com/TransformerOptimus/SuperAGI)
 
+https://pypi.org/project/superagi-tools/ Checkout here!
